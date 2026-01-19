@@ -1,0 +1,39 @@
+# ===========================================
+# MEDICAL CODING PIPELINE - DEPENDENCIES
+# ===========================================
+
+# FastAPI & Server
+fastapi
+uvicorn
+python-multipart
+
+# Validation & Settings 
+pydantic
+pydantic-settings
+python-dotenv
+
+# PDF Processing
+PyMuPDF
+pytesseract
+Pillow
+
+# AI/ML Frameworks
+crewai
+litellm
+langchain-google-genai
+langchain-core
+
+# Embeddings
+sentence-transformers
+transformers
+
+# Vector Database
+pinecone
+
+# Observability
+langfuse
+openlit
+
+# Utilities
+toon-format @ git+https://github.com/toon-format/toon-python.git
+httpx
