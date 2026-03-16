@@ -39,14 +39,14 @@ async def process_medical_text(request: ProcessTextRequest) -> Medical_Coding_Re
     """
     medical_coding_output = Medical_Coding_Pipeline(request.medical_report_text)
     medical_coding_evaluation = LLM_as_Judge(
-    clinical_note=request.medical_report_text,
-    medical_coding_output={
-        "extracted_entities": medical_coding_output['extracted_entities'],
-        "icd_codes": medical_coding_output['icd_codes'],
-        "hcpcs_codes": medical_coding_output['hcpcs_codes'],
-        "cpt_codes": medical_coding_output['cpt_codes'],
-    },
-    trace_id=medical_coding_output['trace_id']
+        clinical_note=request.medical_report_text,
+        medical_coding_output={
+            "extracted_entities": medical_coding_output['extracted_entities'],
+            "icd_codes": medical_coding_output['icd_codes'],
+            "hcpcs_codes": medical_coding_output['hcpcs_codes'],
+            "cpt_codes": medical_coding_output['cpt_codes'],
+        },
+        trace_id=medical_coding_output['trace_id']
     )
     
     # if not medical_coding_evaluation.success:

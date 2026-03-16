@@ -35,8 +35,8 @@ xiaomi_mimo_v2_flash = LLM(
     model='openrouter/xiaomi/mimo-v2-flash:free'
 )
 
-gemini_3_flash = ChatGoogleGenerativeAI(
-    model="gemini-3-flash-preview",
+gemini_3_1_flash = ChatGoogleGenerativeAI(
+    model="gemini-3.1-flash-lite-preview",
     temperature=0,
     max_tokens=None,
     timeout=None,

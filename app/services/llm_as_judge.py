@@ -16,6 +16,20 @@ from app.evaluation.metrics import add_evaluation_scores_to_langfuse
 from langfuse import propagate_attributes
 
 
+def extract_all_codes(medical_coding_output):
+    codes = []
+
+    for c in medical_coding_output["icd_codes"]["icd_codes"]:
+        codes.append(c["code"])
+
+    for c in medical_coding_output["cpt_codes"]["cpt_codes"]:
+        codes.append(c["code"])
+
+    for c in medical_coding_output["hcpcs_codes"]["hcpcs_codes"]:
+        codes.append(c["code"])
+
+    return codes
+
 
 # =========================
 # LLM-as-Judge Execution
@@ -40,16 +54,18 @@ def LLM_as_Judge(clinical_note: str, medical_coding_output: dict, trace_id: str)
             tags=["dev", "crewai"],
         ):
             try:
+                print("Invoking LLM-as-Judge with clinical note and coding output...")
+                print("Clinical Note:", clinical_note)
                 # Invoke the judge model with the structured input
                 judge_output = Judge.invoke({
                     "clinical_note": clinical_note,
                     "medical_coding_output": medical_coding_output
+
                 })
                 
                 # Process and return the judge's output
                 return judge_output.dict()
                 
             except Exception as e:
-                # Log the error and re-raise
-                span.error(f"Judge evaluation failed: {str(e)}")
-                raise
+                # no span
+                return "Error during LLM-as-Judge evaluation: " + str(e)

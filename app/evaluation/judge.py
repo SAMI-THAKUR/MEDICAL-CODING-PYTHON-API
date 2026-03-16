@@ -7,7 +7,7 @@ linkage validity, and compliance risk.
 """
 
 from langchain_core.prompts import ChatPromptTemplate
-from app.core.llm_config import gemini_3_flash
+from app.core.llm_config import gemini_3_1_flash
 from app.models.judge_models import Medical_Coding_Judge_Output
 
 
@@ -118,6 +118,25 @@ EVALUATION PRIORITY ORDER
 4. ICD ↔ CPT / HCPCS linkage validity
 5. Confidence alignment
 
+==================================================
+STRICT CODE BOUNDARY RULE
+==================================================
+
+You MUST evaluate ONLY the codes present in the provided
+"medical_coding_output".
+
+You are strictly forbidden from:
+
+- Introducing new ICD, CPT, or HCPCS codes
+- Suggesting alternative codes
+- Expanding the code list
+- Evaluating codes not present in the input
+
+If a code does not appear in the provided medical_coding_output,
+it must NEVER appear in the evaluation.
+
+Your evaluation must be restricted to the exact codes provided.
+
 When uncertain:
 **Downgrade support rather than guessing**
 
@@ -150,7 +169,7 @@ Return **VALID JSON ONLY**.
 
 # Wrap the Gemini model with a strict structured output schema
 # to ensure deterministic, machine-validated judging results.
-gemini_3_flash = gemini_3_flash.with_structured_output(
+gemini_3_1_flash = gemini_3_1_flash.with_structured_output(
     Medical_Coding_Judge_Output
 )
 
@@ -161,4 +180,4 @@ gemini_3_flash = gemini_3_flash.with_structured_output(
 
 # Final evaluation chain:
 # Prompt → Gemini Judge LLM → Structured JSON Output
-Judge= judging_prompt | gemini_3_flash
+Judge= judging_prompt | gemini_3_1_flash

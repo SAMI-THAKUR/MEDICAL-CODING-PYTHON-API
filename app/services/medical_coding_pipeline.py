@@ -66,7 +66,19 @@ def Medical_Coding_Pipeline(medical_report_text: str) -> dict:
                 if task_out.pydantic and idx < len(order):
                     json_data[order[idx]] = task_out.pydantic.dict()
                     idx += 1
-
+            # -------- Extract flat code lists for evaluation --------
+            json_data["predicted_codes"] = {
+                "icd": [
+                    c["code"] for c in json_data.get("icd_codes", {}).get("icd_codes", [])
+                ],
+                "cpt": [
+                    c["code"] for c in json_data.get("cpt_codes", {}).get("cpt_codes", [])
+                ],
+                "hcpcs": [
+                    c["code"] for c in json_data.get("hcpcs_codes", {}).get("hcpcs_codes", [])
+                ],
+            }
+        
             # Update Langfuse trace
             span.update(
                 input=medical_report_text,
