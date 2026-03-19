@@ -35,10 +35,12 @@ xiaomi_mimo_v2_flash = LLM(
     model='openrouter/xiaomi/mimo-v2-flash:free'
 )
 
+trinity_large_preview = LLM(
+    model='openrouter/arcee-ai/trinity-large-preview:free'
+)
+
 gemini_3_1_flash = ChatGoogleGenerativeAI(
-    model="gemini-3.1-flash-lite-preview",
+    model="gemini-3-flash-preview",
     temperature=0,
-    max_tokens=None,
-    timeout=None,
 )
 

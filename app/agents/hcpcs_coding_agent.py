@@ -13,7 +13,7 @@ using a Retrieval-Augmented Generation (RAG) approach.
 # =========================
 
 from crewai import Agent
-from app.core.llm_config import gpt_oss_120
+from app.core.llm_config import trinity_large_preview
 from app.agents.tools.hcpcs_vector_search_tool import HCPCS_Vector_Search_Tool
 
 
@@ -60,7 +60,7 @@ HCPCS_Coding_Agent = Agent(
     max_iter=5,
 
     # LLM configuration used for HCPCS coding
-    llm=gpt_oss_120,
+    llm=trinity_large_preview,
 
     # Enables verbose execution logs for debugging and compliance review
     verbose=True,

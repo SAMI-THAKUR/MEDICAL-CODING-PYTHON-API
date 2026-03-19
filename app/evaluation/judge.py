@@ -19,8 +19,6 @@ from app.models.judge_models import Medical_Coding_Judge_Output
 # clinical note and coding output into a single chat prompt.
 judging_prompt = ChatPromptTemplate.from_messages(
     [
-        # System message defines the judge’s role, authority,
-        # and strict audit posture
         (
             "system",
             """
@@ -70,7 +68,19 @@ Do NOT penalize for missing specificity
 unless the code **exceeds** what is documented.
 
 
-4. ICD ↔ CPT / HCPCS LINKAGE LOGIC
+4. INCORRECT / MISPLACED CODE DETECTION (NEW)
+- Identify any codes that are **wrongly included** or **should not be present**
+  based on the clinical documentation.
+- A code is considered incorrect if:
+  - It has **no supporting evidence** in the clinical note
+  - It contradicts documented findings
+  - It represents a **higher severity, service, or condition than documented**
+- These codes must be explicitly flagged under:
+  **incorrect_codes** in the output.
+- Do NOT replace or suggest alternatives — only flag presence as incorrect.
+
+
+5. ICD ↔ CPT / HCPCS LINKAGE LOGIC
 - Verify ICD codes justify **medical necessity** for CPT / HCPCS services.
 - Evaluate **clinical plausibility**, not billing optimization.
 - Mark linkage as INVALID if:
@@ -78,36 +88,10 @@ unless the code **exceeds** what is documented.
   - The service contradicts “uncomplicated”, outpatient, or low-acuity context
 
 
-5. CONFIDENCE ALIGNMENT
+6. CONFIDENCE ALIGNMENT
 - High confidence + weak documentation → MISALIGNED
 - Moderate confidence + partial support → ALIGNED
 - Confidence must reflect documentation strength
-
-
-6. HALLUCINATION DETECTION
-A hallucination exists if:
-- A code is NOT traceable to the clinical note, OR
-- The code implies undocumented:
-  - Procedures
-  - Diagnostics
-  - Severity
-  - Treatment intensity
-
-Any hallucination automatically increases compliance risk.
-
-
-7. COMPLIANCE & RISK ASSESSMENT
-Assign an overall compliance risk:
-- **low**    → routine, clearly supported coding
-- **medium** → plausible but audit-sensitive
-- **high**   → likely documentation or medical necessity failure
-
-Pay special attention to:
-- IV therapies
-- High-intensity E/M
-- Invasive procedures
-- Mismatch between documented severity and treatment intensity
-
 
 ==================================================
 EVALUATION PRIORITY ORDER
@@ -115,8 +99,10 @@ EVALUATION PRIORITY ORDER
 1. Clinical documentation
 2. Medical necessity
 3. Term-to-code alignment
-4. ICD ↔ CPT / HCPCS linkage validity
-5. Confidence alignment
+4. Incorrect / misplaced codes
+5. ICD ↔ CPT / HCPCS linkage validity
+6. Confidence alignment
+
 
 ==================================================
 STRICT CODE BOUNDARY RULE
@@ -144,7 +130,6 @@ Act as a **strict, conservative medical coding auditor**.
 
 Return **VALID JSON ONLY**.
 """
-
         ),
 
         # Human message injects the clinical note and
@@ -153,10 +138,10 @@ Return **VALID JSON ONLY**.
             "human",
             """
             Clinical Note:
-            {{clinical_note}}
+            {clinical_note}
 
             Medical Coding Output:
-            {{medical_coding_output}}
+            {medical_coding_output}
             """
         ),
     ]

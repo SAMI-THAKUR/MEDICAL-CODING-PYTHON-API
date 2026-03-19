@@ -1,7 +1,3 @@
-"""
-Schema for LLM as a Judge Agent
-"""
-
 from enum import Enum
 from typing import List, Optional
 from pydantic import BaseModel, Field
@@ -27,39 +23,18 @@ class Risk_Level(str, Enum):
     high = "high"
 
 
-class Code_Judgement(BaseModel):
-    """Individual code evaluation"""
-    
-    code: str = Field(..., description="ICD, CPT, or HCPCS code")
-    
-    code_type: str = Field(..., description="icd | cpt | hcpcs")
-    
-    term_match: bool = Field(
-        ..., description="Code matches extracted clinical term"
-    )
-    
-    documentation_support: Support_Level
-    
-    linkage_valid: Optional[bool] = Field(
-        None,
-        description="Whether linked ICD codes justify this code"
-    )
-    
-    confidence_alignment: bool = Field(
-        ..., description="Model confidence aligns with correctness"
-    )
-    
-    issues: Optional[List[str]] = Field(
-        default=None,
-        description="Reasons for failure or concern"
-    )
-
-
 class Section_Judgement(BaseModel):
     """Section-level evaluation"""
     
     section: str = Field(..., description="icd | cpt | hcpcs")
     verdict: Verdict
+    
+    # ✅ NEW FIELD
+    incorrect_codes: Optional[List[str]] = Field(
+        default=None,
+        description="Codes that are wrongly included or should not be present based on the documentation"
+    )
+    
     notes: Optional[str] = None
 
 
@@ -74,13 +49,17 @@ class Medical_Coding_Judge_Output(BaseModel):
     
     section_judgements: List[Section_Judgement]
     
-    code_judgements: List[Code_Judgement]
-    
     compliance_risk: Risk_Level
     
     summary: str = Field(
         ..., min_length=30,
         description="Concise explanation of the final judgement"
+    )
+    
+    # ✅ OPTIONAL: overall incorrect codes summary
+    incorrect_codes_overall: Optional[List[str]] = Field(
+        default=None,
+        description="All incorrectly included codes across sections"
     )
     
     notes: Optional[str] = None

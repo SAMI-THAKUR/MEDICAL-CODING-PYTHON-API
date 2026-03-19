@@ -55,7 +55,7 @@ def LLM_as_Judge(clinical_note: str, medical_coding_output: dict, trace_id: str)
         ):
             try:
                 print("Invoking LLM-as-Judge with clinical note and coding output...")
-                print("Clinical Note:", clinical_note)
+                print("Medical Coding Output:", medical_coding_output)
                 # Invoke the judge model with the structured input
                 judge_output = Judge.invoke({
                     "clinical_note": clinical_note,
