@@ -1,0 +1,51 @@
+# Python
+
+**pycache**/
+_.pyc
+_.pyo
+\*.pyd
+
+# Virtual environments
+
+venv/
+.venv/
+env/
+
+# Git
+
+.git
+.gitignore
+
+# Environment variables
+
+.env
+.env.\*
+
+# Logs
+
+\*.log
+
+# OS files
+
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+
+build/
+dist/
+\*.egg-info/
+
+# Jupyter
+
+.ipynb_checkpoints/
+
+# ML models (very important if large)
+
+_.pt
+_.pth
+\*.onnx
+
+# Cache
+
+.cache/
