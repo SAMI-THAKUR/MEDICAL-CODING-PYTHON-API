@@ -1,430 +1,389 @@
-# medi-suite_AI
+# MEDICAL CODING BACKEND
 
-# Multi-Agent Insurance Claim System: Diagrammatic Flow Analysis
+A FastAPI-based medical coding backend that processes clinical notes using a multi-agent CrewAI pipeline to extract structured entities and assign coding candidates across ICD-10-CM, CPT-4, and HCPCS Level II.
 
-## 🏗️ **High-Level System Architecture**
+## Overview
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                    MULTI-AGENT INSURANCE CLAIM SYSTEM                      │
-└─────────────────────────────────────────────────────────────────────────────┘
+This project transforms raw medical report text into structured, coding-ready outputs by combining:
 
-INPUT LAYER           PROCESSING LAYER              OUTPUT LAYER
-┌─────────────┐      ┌─────────────────────────┐    ┌─────────────────┐
-│Medical      │      │     AGENT ORCHESTRA     │    │Insurance Claims │
-│Records      │ ───► │                         │ ──►│& Billing Data   │
-│             │      │  🤖 OCR Agent           │    │                 │
-│• PDFs       │      │  🧠 Clinical Agent      │    │• CMS-1500       │
-│• Images     │      │  💉 Coding Agents       │    │• UB-04          │
-│• Scanned    │      │  💰 Claim Agent         │    │• 837 EDI        │
-│• Text       │      │  🛡️ Validator Agent     │    │• Billing Data   │
-│             │      │  📊 Monitor Agent       │    │• Analytics      │
-└─────────────┘      └─────────────────────────┘    └─────────────────┘
-```
+- FastAPI APIs
+- CrewAI multi-agent orchestration
+- Vector-based retrieval for coding reference data
+- LLM-powered reasoning and evaluation
+- Langfuse observability and trace tracking
 
-## 🔄 **Detailed Agent Interaction Flow**
+The backend is designed to support medical coding workflows such as:
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        AGENT COLLABORATION DIAGRAM                         │
-└─────────────────────────────────────────────────────────────────────────────┘
+- Extracting diagnoses, medications, procedures, and findings
+- Mapping relevant entities to ICD-10-CM codes
+- Mapping procedures to CPT-4 codes
+- Mapping medications / supplies / services to HCPCS Level II codes
+- Returning structured outputs for downstream review or UI integration
 
-    📄 MEDICAL RECORD
-           │
-           ▼
-    ┌─────────────┐
-    │ OCR AGENT   │ ◄─── Extracts text, insurance info, demographics
-    │ 🤖          │
-    └──────┬──────┘
-           │ Structured Data
-           ▼
-    ┌─────────────┐
-    │ CLINICAL    │ ◄─── Summarizes diagnoses, procedures, medical necessity
-    │ AGENT 🧠    │
-    └──────┬──────┘
-           │ Clinical Summary
-           ▼
-    ┌─────────────┬─────────────┬─────────────┐
-    │ DIAGNOSIS   │ PROCEDURE   │ REVENUE     │ ◄─── Parallel coding process
-    │ AGENT 💊    │ AGENT 🔧    │ AGENT 💰    │
-    └──────┬──────┴──────┬──────┴──────┬──────┘
-           │             │             │ Medical Codes
-           └─────────────┼─────────────┘
-                         ▼
-               ┌─────────────┐
-               │ CLAIM       │ ◄─── Generates insurance claims
-               │ AGENT 📋    │
-               └──────┬──────┘
-                      │ Draft Claim
-                      ▼
-               ┌─────────────┐
-               │ VALIDATOR   │ ◄─── Validates accuracy, compliance
-               │ AGENT 🛡️    │
-               └──────┬──────┘
-                      │ Validated Claim
-                      ▼
-               ┌─────────────┐
-               │ MONITOR     │ ◄─── Quality assurance, oversight
-               │ AGENT 👁️    │
-               └──────┬──────┘
-                      │ Final Claim
-                      ▼
-               ┌─────────────┐
-               │ BILLING     │ ◄─── Dashboard, tracking, analytics
-               │ DASHBOARD   │
-               └─────────────┘
-```
+---
 
-## 📊 **Data Flow Architecture**
+## Features
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           DATA FLOW DIAGRAM                                │
-└─────────────────────────────────────────────────────────────────────────────┘
+- Multi-agent architecture for medical entity extraction and coding
+- Structured API input/output models
+- REST API built with FastAPI
+- CrewAI-based orchestration for coding agents
+- Vector database support for retrieval-augmented coding assistance
+- Langfuse tracing for execution monitoring and debugging
+- LLM-as-Judge evaluation support
+- CORS-enabled backend for frontend integration
 
-INPUT DATA SOURCES:
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│ Medical     │    │ Insurance   │    │ Provider    │    │ Patient     │
-│ Records     │    │ Cards       │    │ Information │    │ Demographics│
-│             │    │             │    │             │    │             │
-│• Discharge  │    │• Policy #   │    │• NPI        │    │• Name       │
-│• Lab Reports│    │• Group ID   │    │• Taxonomy   │    │• DOB        │
-│• Procedures │    │• Copay      │    │• Address    │    │• Address    │
-│• Diagnoses  │    │• Deductible │    │• Phone      │    │• SSN        │
-└──────┬──────┘    └──────┬──────┘    └──────┬──────┘    └──────┬──────┘
-       │                  │                  │                  │
-       └──────────────────┼──────────────────┼──────────────────┘
-                          │                  │
-                          ▼                  ▼
-              ┌─────────────────────────────────────┐
-              │        CENTRAL DATA PROCESSOR       │
-              │                                     │
-              │  📝 Text Extraction                 │
-              │  🔍 Entity Recognition              │
-              │  🧬 Medical NLP                     │
-              │  💾 Structured Storage              │
-              └─────────────┬───────────────────────┘
-                            │
-                            ▼
-              ┌─────────────────────────────────────┐
-              │         CODING ENGINES              │
-              │                                     │
-              │  🏥 ICD-10 Mapping                  │
-              │  💉 CPT Assignment                  │
-              │  💰 Revenue Codes                   │
-              │  🔗 Modifier Logic                  │
-              └─────────────┬───────────────────────┘
-                            │
-                            ▼
-              ┌─────────────────────────────────────┐
-              │        CLAIM GENERATION             │
-              │                                     │
-              │  📋 CMS-1500 Forms                  │
-              │  🏥 UB-04 Forms                     │
-              │  💻 837 EDI Files                   │
-              │  📊 Billing Reports                 │
-              └─────────────────────────────────────┘
-```
+---
 
-## 🤖 **Agent-by-Agent Process Flow**
+## Tech Stack
 
-### **1. OCR & Extraction Agent Process**
+- Python 3.11+
+- FastAPI
+- Uvicorn
+- Pydantic / Pydantic Settings
+- CrewAI
+- LangChain / Google GenAI
+- Pinecone
+- Langfuse
+- Sentence Transformers
+- Python-dotenv
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           OCR AGENT WORKFLOW                               │
-└─────────────────────────────────────────────────────────────────────────────┘
+---
 
-📄 INPUT DOCUMENTS
+## Project Structure
+
+```text
+backend/
+├── app/
+│   ├── agents/
+│   │   ├── input_structuring_agent.py
+│   │   ├── icd_coding_agent.py
+│   │   ├── cpt_coding_agent.py
+│   │   ├── hcpcs_coding_agent.py
+│   │   ├── crew.py
+│   │   └── tools/
+│   │       ├── icd_vector_search_tool.py
+│   │       ├── cpt_vector_search_tool.py
+│   │       ├── hcpcs_vector_search_tool.py
+│   │       └── helpers.py
+│   │
+│   ├── api/
+│   │   └── v1/
+│   │       ├── router.py
+│   │       └── endpoints/
+│   │           ├── health.py
+│   │           └── coding.py
+│   │
+│   ├── config/
+│   │   ├── env.py
+│   │   └── settings.py
+│   │
+│   ├── core/
+│   │   ├── config.py
+│   │   ├── embeddings.py
+│   │   ├── llm_config.py
+│   │   ├── tracing.py
+│   │   └── vector_db.py
+│   │
+│   ├── evaluation/
+│   │   ├── judge.py
+│   │   └── metrics.py
+│   │
+│   ├── models/
+│   │   ├── requests.py
+│   │   ├── responses.py
+│   │   ├── input_structuring_models.py
+│   │   ├── icd_models.py
+│   │   ├── cpt_models.py
+│   │   ├── hcpcs_models.py
+│   │   └── judge_models.py
+│   │
+│   ├── services/
+│   │   ├── medical_coding_pipeline.py
+│   │   ├── llm_as_judge.py
+│   │   └── pdf_extractor.py
+│   │
+│   ├── tasks/
+│   │   ├── input_structuring_task.py
+│   │   ├── icd_coding_task.py
+│   │   ├── cpt_coding_task.py
+│   │   └── hcpcs_coding_task.py
+│   │
+│   ├── main.py
+│   └── medical_coding_crew.py
 │
-├── 📋 Medical Records (PDF/Image)
-├── 💳 Insurance Cards  
-├── 🆔 Patient ID Documents
-└── 📝 Provider Notes
+├── requirements.txt
+├── Dockerfile
+├── README.md
+├── README-Agents.md
+└── sample_medical_report_1.pdf
 
-         │ Document Processing
-         ▼
-┌─────────────────┐
-│  TEXT           │ ◄─── OCR Processing (Tesseract/PaddleOCR)
-│  EXTRACTION     │      • Image preprocessing
-│                 │      • Text recognition
-│                 │      • Confidence scoring
-└─────┬───────────┘
-      │ Raw Text
-      ▼
-┌─────────────────┐
-│  ENTITY         │ ◄─── NLP Processing (SpaCy/BERT)
-│  RECOGNITION    │      • Named entity recognition
-│                 │      • Medical terminology extraction
-│                 │      • Relationship mapping
-└─────┬───────────┘
-      │ Structured Entities
-      ▼
-┌─────────────────┐
-│  DATA           │ ◄─── Validation & Formatting
-│  VALIDATION     │      • Format verification
-│                 │      • Completeness check
-│                 │      • Error flagging
-└─────┬───────────┘
-      │ Validated Data
-      ▼
-📊 OUTPUT: Structured Patient/Insurance Data
+The backend follows a pipeline-based design:
+
+1. Input medical text is received from the API
+2. The input structuring agent extracts clinically relevant entities
+3. Diagnosis, procedure, and supply coding agents process the structured entities
+4. Retrieval and LLM reasoning are used to select candidate codes
+5. Output is aggregated and returned in JSON
+6. Optional evaluator runs a quality review using LLM-as-Judge
+7. Langfuse captures input, output, and trace metadata
+
+```text
+Medical Report Text
+        |
+        v
+Input Structuring Agent
+        |
+        v
+ICD / CPT / HCPCS Coding Agents
+        |
+        v
+Vector Search + LLM Reasoning
+        |
+        v
+Structured Coding Output
+        |
+        v
+LLM Judge / Evaluation
+        |
+        v
+FastAPI Response
 ```
 
-### **2. Clinical Summarizer Agent Process**
+---
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                      CLINICAL AGENT WORKFLOW                               │
-└─────────────────────────────────────────────────────────────────────────────┘
+## Environment Setup
 
-📊 INPUT: Structured Medical Data
-│
-├── 🏥 Diagnoses & Symptoms
-├── 💉 Procedures & Treatments  
-├── 💊 Medications & Dosages
-├── 🧪 Lab Results & Vitals
-└── 📅 Timeline & Dates
+### 1. Create a virtual environment
 
-         │ Clinical Analysis
-         ▼
-┌─────────────────┐
-│  MEDICAL        │ ◄─── Clinical NLP (BioBERT/Med-PaLM)
-│  UNDERSTANDING  │      • Medical concept extraction
-│                 │      • Clinical reasoning
-│                 │      • Severity assessment
-└─────┬───────────┘
-      │ Clinical Concepts
-      ▼
-┌─────────────────┐
-│  MEDICAL        │ ◄─── Evidence Compilation
-│  NECESSITY      │      • Treatment justification
-│                 │      • Supporting documentation
-│                 │      • Clinical guidelines
-└─────┬───────────┘
-      │ Justified Treatments
-      ▼
-┌─────────────────┐
-│  CLINICAL       │ ◄─── Structured Summary
-│  SUMMARY        │      • Primary diagnoses
-│                 │      • Secondary conditions
-│                 │      • Procedure rationale
-└─────┬───────────┘
-      │ Clinical Summary
-      ▼
-📋 OUTPUT: Medical Necessity Documentation
+```bash
+python -m venv .venv
 ```
 
-### **3. Coding Agents Process (Parallel Processing)**
+Activate it:
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         CODING AGENTS WORKFLOW                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-📋 INPUT: Clinical Summary
-│
-├─────────────────┬─────────────────┬─────────────────┐
-│                 │                 │                 │
-▼                 ▼                 ▼                 ▼
-┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
-│ DIAGNOSIS   │   │ PROCEDURE   │   │ REVENUE     │   │ MODIFIER    │
-│ AGENT 💊    │   │ AGENT 🔧    │   │ AGENT 💰    │   │ AGENT 🏷️    │
-│             │   │             │   │             │   │             │
-│ ICD-10      │   │ CPT Codes   │   │ UB-04       │   │ Modifiers   │
-│ Mapping     │   │ HCPCS       │   │ Revenue     │   │ Location    │
-│             │   │             │   │ Codes       │   │ Timing      │
-└─────┬───────┘   └─────┬───────┘   └─────┬───────┘   └─────┬───────┘
-      │               │               │               │
-      │ ICD-10 Codes  │ CPT Codes     │ Revenue Codes │ Modifiers
-      │               │               │               │
-      └───────────────┼───────────────┼───────────────┘
-                      │               │
-                      ▼               ▼
-              ┌─────────────────────────────┐
-              │     CODE INTEGRATION        │ ◄─── Code Combination Logic
-              │                             │      • Compatibility check
-              │  🔗 Cross-Reference        │      • Hierarchy validation
-              │  ✅ Validation             │      • Completeness verification
-              │  🎯 Optimization           │      • Reimbursement optimization
-              └─────────────┬───────────────┘
-                            │ Integrated Codes
-                            ▼
-              📊 OUTPUT: Complete Code Set with Justification
+On Windows:
+```bash
+.venv\Scripts\activate
 ```
 
-### **4. Claim Generation Agent Process**
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                      CLAIM GENERATION WORKFLOW                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-📊 INPUT: Coded Medical Data
-│
-├── 💊 ICD-10 Diagnosis Codes
-├── 🔧 CPT Procedure Codes  
-├── 💰 Revenue Codes
-├── 🏷️ Modifiers
-└── 👤 Patient/Insurance Data
-
-         │ Claim Assembly
-         ▼
-┌─────────────────┐
-│  PAYER          │ ◄─── Insurance-Specific Rules
-│  RULES          │      • Medicare guidelines
-│                 │      • Commercial payer rules
-│                 │      • State Medicaid requirements
-└─────┬───────────┘
-      │ Payer Requirements
-      ▼
-┌─────────────────┐
-│  FORM           │ ◄─── Claim Form Generation
-│  GENERATION     │      • CMS-1500 (Professional)
-│                 │      • UB-04 (Institutional)
-│                 │      • 837P/837I (Electronic)
-└─────┬───────────┘
-      │ Formatted Claims
-      ▼
-┌─────────────────┐
-│  ATTACHMENT     │ ◄─── Supporting Documentation
-│  PROCESSING     │      • Medical records
-│                 │      • Lab results
-│                 │      • Authorization letters
-└─────┬───────────┘
-      │ Complete Claims Package
-      ▼
-📋 OUTPUT: Submission-Ready Insurance Claims
+On macOS/Linux:
+```bash
+source .venv/bin/activate
 ```
 
-### **5. Validation & Monitor Agent Process**
+### 2. Install dependencies
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                    VALIDATION & MONITORING WORKFLOW                        │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-📋 INPUT: Draft Claims
-│
-├── 📊 Claim Data
-├── 💊 Assigned Codes
-├── 📄 Supporting Documents
-└── 🎯 Payer Requirements
-
-         │ Multi-Level Validation
-         ▼
-┌─────────────────┐
-│  SYNTAX         │ ◄─── Format & Structure Check
-│  VALIDATION     │      • Required fields present
-│                 │      • Correct data formats
-│                 │      • Field length validation
-└─────┬───────────┘
-      │ Syntactically Valid
-      ▼
-┌─────────────────┐
-│  CLINICAL       │ ◄─── Medical Logic Check
-│  VALIDATION     │      • Code combinations valid
-│                 │      • Age/gender appropriate
-│                 │      • Medical necessity verified
-└─────┬───────────┘
-      │ Clinically Valid
-      ▼
-┌─────────────────┐
-│  COMPLIANCE     │ ◄─── Regulatory Compliance
-│  VALIDATION     │      • Coding guidelines
-│                 │      • Payer policies
-│                 │      • Fraud detection
-└─────┬───────────┘
-      │ Compliant Claims
-      ▼
-┌─────────────────┐
-│  CONFIDENCE     │ ◄─── Quality Scoring
-│  SCORING        │      • Accuracy probability
-│                 │      • Denial risk assessment
-│                 │      • Review recommendations
-└─────┬───────────┘
-      │ Scored Claims
-      ▼
-✅ OUTPUT: Validated, High-Confidence Claims
+```bash
+pip install -r requirements.txt
 ```
 
-## 📊 **Billing Dashboard Data Flow**
+---
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                      DASHBOARD DATA ARCHITECTURE                           │
-└─────────────────────────────────────────────────────────────────────────────┘
+## Configuration
 
-DATA SOURCES:                    PROCESSING:                 USER INTERFACES:
-┌─────────────┐                 ┌─────────────┐             ┌─────────────┐
-│ Claims      │────────────────►│ Real-Time   │────────────►│ Executive   │
-│ Database    │                 │ Analytics   │             │ Dashboard   │
-│             │                 │ Engine      │             │             │
-│• Status     │                 │             │             │• Revenue    │
-│• Payments   │                 │• Aggregation│             │• KPIs       │
-│• Denials    │                 │• Trending   │             │• Alerts     │
-└─────────────┘                 │• Forecasting│             └─────────────┘
-                                └─────────────┘                     │
-┌─────────────┐                         │                          │
-│ Payment     │─────────────────────────┤                          │
-│ Systems     │                         │                          │
-│             │                         ▼                          ▼
-│• Bank Feeds │                 ┌─────────────┐             ┌─────────────┐
-│• Credit Card│                 │ Business    │────────────►│ Operational │
-│• EFT        │                 │ Intelligence│             │ Dashboard   │
-└─────────────┘                 │             │             │             │
-                                │• Drill-down │             │• Work Queues│
-┌─────────────┐                 │• Filtering  │             │• Performance│
-│ Patient     │─────────────────┤• Reporting  │             │• Trends     │
-│ Accounts    │                 └─────────────┘             └─────────────┘
-│             │                         │                          │
-│• Balances   │                         │                          │
-│• Statements │                         ▼                          ▼
-│• Payments   │                 ┌─────────────┐             ┌─────────────┐
-└─────────────┘                 │ Alert       │────────────►│ Individual  │
-                                │ Engine      │             │ User Views  │
-┌─────────────┐                 │             │             │             │
-│ External    │─────────────────┤• Thresholds │             │• Personal   │
-│ Systems     │                 │• Notifications             │• Tasks      │
-│             │                 │• Escalations│             │• Metrics    │
-│• Clearinghouse               └─────────────┘             └─────────────┘
-│• Payer Portals
-│• EHR Systems
-└─────────────┘
+Create a `.env` file in the project environment and configure the required values.
+
+Example:
+
+```env
+APP_NAME=Medical Coding API
+APP_VERSION=1.0.0
+DEBUG=true
+ENVIRONMENT=development
+HOST=0.0.0.0
+PORT=8001
+
+GOOGLE_API_KEY=your_google_api_key
+GROQ_API_KEY=your_groq_api_key
+OPENROUTER_API_KEY=your_openrouter_api_key
+
+LANGFUSE_PUBLIC_KEY=your_public_key
+LANGFUSE_SECRET_KEY=your_secret_key
+LANGFUSE_BASE_URL=https://cloud.langfuse.com
+
+PINECONE_API_KEY=your_pinecone_api_key
+PINECONE_INDEX_ICD=icd10
+PINECONE_INDEX_HCPCS=hcpcs
+PINECONE_INDEX_CPT=cpt
+
+CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 ```
 
-## 🔄 **End-to-End Process Timeline**
+> Keep your `.env` file private and do not commit secrets to version control.
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        COMPLETE SYSTEM TIMELINE                            │
-└─────────────────────────────────────────────────────────────────────────────┘
+---
 
-TIME: 0 MIN          5 MIN           10 MIN          15 MIN          20 MIN
-│                    │               │               │               │
-▼                    ▼               ▼               ▼               ▼
-📄 Document Input    🤖 OCR Complete  🧠 Clinical     💰 Claim        ✅ Validation
-                                     Summary Done    Generated       Complete
+## Running the Server
 
-│◄─── OCR Agent ────►│◄── Clinical ──►│◄─ Coding ───►│◄─ Validation ─►│
-│                    │    Agent       │   Agents     │   & Monitor   │
-│• Text extraction   │• Medical NLP   │• ICD-10      │• Quality      │
-│• Entity recognition│• Summarization │• CPT codes   │  checks       │
-│• Data structuring  │• Medical       │• Revenue     │• Compliance   │
-│                    │  necessity     │  codes       │• Scoring      │
+From the backend root:
 
-                                     PARALLEL PROCESSING
-                    ┌─────────────────────────────────────┐
-                    │  🏥 Diagnosis Coding (2-3 min)     │
-                    │  💉 Procedure Coding (2-3 min)     │
-                    │  💰 Revenue Coding (1-2 min)       │
-                    │  🏷️ Modifier Assignment (1 min)    │
-                    └─────────────────────────────────────┘
-
-CONTINUOUS MONITORING:
-│◄────────────── Dashboard Updates ──────────────►│
-│◄────────────── Alert Generation ───────────────►│
-│◄────────────── Quality Tracking ───────────────►│
+```bash
+uvicorn app.main:app --reload
 ```
 
-This diagrammatic approach shows how your multi-agent system creates a seamless, automated pipeline from medical records to insurance claims with complete billing visibility. Each agent has a specific role, and the parallel processing ensures efficiency while maintaining accuracy through continuous validation and monitoring.
+Or with explicit host and port:
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+```
+
+The app will start with FastAPI docs available at:
+
+- Swagger UI: http://localhost:8001/docs
+- ReDoc: http://localhost:8001/redoc
+
+---
+
+## API Endpoints
+
+### Health check
+
+```http
+GET /api/v1/health
+```
+
+Example response:
+
+```json
+{
+  "status": "healthy",
+  "version": "1.0.0",
+  "environment": "development"
+}
+```
+
+### Process medical report text
+
+```http
+POST /api/v1/coding/process/text
+```
+
+Request body:
+
+```json
+{
+  "medical_report_text": "Patient is a 67-year-old male with chronic cough, wheezing, and shortness of breath. Diagnosed with acute bronchitis. Prescribed albuterol inhaler and ordered chest X-ray.",
+  "include_evaluation": true
+}
+```
+
+Example response structure:
+
+```json
+{
+  "extracted_entities": {
+    "diagnoses": [],
+    "medications": [],
+    "procedures": [],
+    "findings": []
+  },
+  "icd_codes": {
+    "icd_codes": []
+  },
+  "cpt_codes": {
+    "cpt_codes": []
+  },
+  "hcpcs_codes": {
+    "hcpcs_codes": []
+  },
+  "evaluation": {},
+  "trace_id": "..."
+}
+```
+
+---
+
+## Request and Response Models
+
+The backend uses Pydantic models for validation.
+
+### ProcessTextRequest
+
+```python
+class ProcessTextRequest(BaseModel):
+    medical_report_text: str
+    include_evaluation: bool = True
+```
+
+### HealthResponse
+
+```python
+class HealthResponse(BaseModel):
+    status: str
+    version: str
+    environment: str
+```
+
+## Coding Workflow
+
+The system is designed around a clinical coding pipeline:
+
+- Input structuring agent identifies medically relevant entities
+- Each coding agent maps extracted data into relevant code families
+- Vector retrieval is used to search code repositories or indexing stores
+- LLMs weigh clinical context and retrieve best-fit candidates
+- Final output is merged into a unified response
+- Evaluation can be included for quality checks
+
+---
+
+## Notes on Observability
+
+The project uses Langfuse for tracing, enabling:
+
+- End-to-end request tracking
+- Prompt and output visibility
+- Trace IDs for debugging
+- Metadata collection for auditability
+
+Each pipeline execution generates a `trace_id` that is returned with the output.
+
+---
+
+## Development Notes
+
+- The application entry point is `app/main.py`
+- The API router is configured in `app/api/v1/router.py`
+- The orchestration logic is in `app/medical_coding_crew.py`
+- The coding pipeline lives in `app/services/medical_coding_pipeline.py`
+- Environment settings are defined in `app/config/settings.py` and `app/core/config.py`
+
+---
+
+## Troubleshooting
+
+### Server fails to start
+Check that dependencies are installed and that your virtual environment is active:
+
+```bash
+pip install -r requirements.txt
+```
+
+### Missing API keys
+Ensure your `.env` file contains valid values for the services you use:
+
+- `GOOGLE_API_KEY`
+- `GROQ_API_KEY`
+- `OPENROUTER_API_KEY`
+- `PINECONE_API_KEY`
+- `LANGFUSE_PUBLIC_KEY`
+- `LANGFUSE_SECRET_KEY`
+
+### CORS issues
+Update `CORS_ORIGINS` in the environment or config to include your frontend origin.
+
+### No outputs from coding pipeline
+Confirm that the model providers and vector search configuration are valid and that your vector indexes exist.
+
+---
+
+## License
+
+This project is intended for internal or research use unless otherwise stated by the repository owner.
+
+---
+
+## Summary
+
+This backend provides a practical foundation for medical coding automation using AI-driven, multi-agent reasoning. It is suited for experimentation, API integration, and deployment into clinical documentation or coding review workflows.
