@@ -1,423 +1,217 @@
-# 🏥 Medical Coding Pipeline API
+# Medical Coding Backend Agents
 
-A robust FastAPI backend for **automated medical billing code assignment** using CrewAI multi-agent architecture with RAG (Retrieval-Augmented Generation).
+This backend uses a multi-agent CrewAI workflow to turn raw clinical text into structured coding outputs. Each agent plays a specific role in the pipeline and contributes to the final result.
 
----
+## System Overview
 
-## 📋 Table of Contents
+The agent pipeline works like this:
 
-- [Features](#-features)
-- [Architecture](#-architecture)
-- [Prerequisites](#-prerequisites)
-- [Installation](#-installation)
-- [Configuration](#-configuration)
-- [Running the Server](#-running-the-server)
-- [API Documentation](#-api-documentation)
-- [API Endpoints](#-api-endpoints)
-- [Project Structure](#-project-structure)
-- [Testing](#-testing)
-- [Troubleshooting](#-troubleshooting)
-- [Team Members](#-team-members)
+- Input Structuring Agent reads the raw medical report and extracts structured entities
+- ICD Coding Agent maps relevant diagnoses to ICD-10-CM codes
+- CPT Coding Agent maps procedures and services to CPT-4 codes
+- HCPCS Coding Agent maps supplies, drugs, injections, and equipment to HCPCS Level II codes
+- Results are combined into a single response object for the API
 
----
+The overall flow is:
 
-## ✨ Features
-
-- **Multi-Agent System**: CrewAI-powered agents for ICD-10-CM, CPT-4, and HCPCS coding
-- **RAG Pipeline**: Pinecone vector database + LLM reasoning for accurate code retrieval
-- **LLM as Judge**: Quality evaluation and compliance checking
-- **PDF Support**: Extract and process medical reports from PDFs with OCR fallback
-- **Observability**: Full tracing with Langfuse for debugging and evaluation
-- **RESTful API**: Clean API endpoints for integration with frontend applications
+Medical report text
+→ Entity extraction
+→ Diagnosis coding
+→ Procedure coding
+→ Supply/drug coding
+→ Structured output
 
 ---
 
-## 🏗️ Architecture
+## 1. Input Structuring Agent
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        FastAPI Backend                          │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐         │
-│  │   Entity    │───▶│  ICD-10-CM  │───▶│   HCPCS     │         │
-│  │ Structuring │    │   Coding    │    │   Coding    │         │
-│  │   Agent     │    │   Agent     │    │   Agent     │         │
-│  └─────────────┘    └─────────────┘    └─────────────┘         │
-│         │                  │                  │                 │
-│         │                  ▼                  ▼                 │
-│         │           ┌─────────────┐    ┌─────────────┐         │
-│         │           │  Pinecone   │    │   CPT-4     │         │
-│         │           │  Vector DB  │    │   Coding    │         │
-│         │           │    (RAG)    │    │   Agent     │         │
-│         │           └─────────────┘    └─────────────┘         │
-│         │                                     │                 │
-│         └─────────────────────────────────────┘                 │
-│                            │                                    │
-│                            ▼                                    │
-│                    ┌─────────────┐                              │
-│                    │  LLM Judge  │                              │
-│                    │ (Evaluation)│                              │
-│                    └─────────────┘                              │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
+Role:
+Medical Entity Structuring Agent
 
----
+Purpose:
+This agent is the first stage of the coding pipeline. It receives unstructured clinical or prescription text and converts it into normalized, coding-ready medical entities.
 
-## 📦 Prerequisites
+What it extracts:
+- Diagnoses or clinical impressions
+- Medications
+- Doses and frequencies
+- Routes of administration
+- Procedures or services performed
+- Relevant findings that may affect treatment or coding
 
-Before you begin, ensure you have the following installed:
+Why it matters:
+The coding agents depend on clean, structured input. This agent reduces ambiguity and prepares the data for accurate code assignment.
 
-| Requirement | Version | Check Command |
-|-------------|---------|---------------|
-| **Python** | 3.11.x | `python --version` or `py --list` |
-| **pip** | Latest | `pip --version` |
-| **Git** | Latest | `git --version` |
+Behavior:
+- Focuses on clinically relevant content only
+- Ignores irrelevant narrative details
+- Normalizes extracted data into structured medical items
+- Produces coding-ready fields for ICD, CPT, and HCPCS workflows
 
-### Windows Users
-Make sure Python 3.11 is installed. You can check available Python versions with:
-```bash
-py --list
-```
+Model used:
+Gemini 2.5 Flash
+
+Key idea:
+This is the preprocessing agent that turns messy text into a standard medical entity model.
 
 ---
 
-## 🚀 Installation
+## 2. ICD-10-CM Coding Agent
 
-### Step 1: Clone the Repository
+Role:
+ICD-10-CM Coding Agent
 
-```bash
-git clone <repository-url>
-cd Be-project/backend
-```
+Purpose:
+This agent assigns diagnosis codes using clinical reasoning and vector search grounding.
 
-### Step 2: Create Virtual Environment (Python 3.11)
+What it does:
+- Reads structured diagnostic entities
+- Retrieves relevant ICD references from the vector database
+- Applies ICD coding logic and specificity rules
+- Prefers the most accurate and specific diagnosis code
+- Ignores ruled-out or negated diagnoses
 
-**Windows (Command Prompt):**
-```bash
-py -3.11 -m venv venv
-```
+Typical responsibilities:
+- Identify principal or primary diagnoses
+- Capture chronic or acute conditions
+- Recognize clinically relevant secondary conditions
+- Apply coding specificity and guideline awareness
 
-**Windows (PowerShell):**
-```powershell
-py -3.11 -m venv venv
-```
+Important rules:
+- Use retrieval support when available
+- Prefer the highest-level specificity supported by the evidence
+- Return only valid structured output for the ICD schema
 
-**Linux/macOS:**
-```bash
-python3.11 -m venv venv
-```
+Model used:
+GPT-OSS 120
 
-### Step 3: Activate Virtual Environment
-
-**Windows (Command Prompt):**
-```bash
-venv\Scripts\activate
-```
-
-**Windows (PowerShell):**
-```powershell
-.\venv\Scripts\Activate.ps1
-```
-
-**Windows (Git Bash):**
-```bash
-source venv/Scripts/activate
-```
-
-**Linux/macOS:**
-```bash
-source venv/bin/activate
-```
-
-> ✅ You should see `(venv)` in your terminal prompt after activation.
-
-### Step 4: Verify Python Version
-
-```bash
-python --version
-```
-Expected output: `Python 3.11.x`
-
-### Step 5: Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-> ⏳ This may take a few minutes as it installs ML libraries like transformers, sentence-transformers, etc.
+Key idea:
+This agent focuses on diagnosis coding and is responsible for the medical necessity context behind the patient’s condition.
 
 ---
 
-## ⚙️ Configuration
+## 3. CPT-4 Coding Agent
 
-### Step 1: Create Environment File
+Role:
+CPT-4 Coding Agent
 
-Copy the example environment file:
+Purpose:
+This agent assigns procedure and service codes to the reported clinical services.
 
-**Windows:**
-```bash
-copy .env.example .env
-```
+What it does:
+- Reads the structured procedure entities
+- Uses vector-based CPT references for grounding
+- Selects the most accurate CPT-4 code
+- Considers medical necessity in relation to diagnoses
+- Avoids incorrect unbundling or inflated procedure selection
 
-**Linux/macOS:**
-```bash
-cp .env.example .env
-```
+Typical responsibilities:
+- Evaluate or consultation services
+- Procedure or intervention coding
+- Service line classification
+- Matching codes to documented clinical actions
 
-### Step 2: Configure API Keys
+Important rules:
+- Apply CPT coding guidance and hierarchy logic
+- Avoid generic or overbroad code selection
+- Return structured output aligned to the CPT schema
 
-Open `.env` in your editor and replace the placeholder values with your actual API keys:
+Model used:
+GPT-OSS 120
 
-```env
-# LLM API Keys
-GOOGLE_API_KEY=your_actual_google_api_key
-GROQ_API_KEY=your_actual_groq_api_key
-OPENROUTER_API_KEY=your_actual_openrouter_api_key
-
-# Langfuse (Observability)
-LANGFUSE_PUBLIC_KEY=your_langfuse_public_key
-LANGFUSE_SECRET_KEY=your_langfuse_secret_key
-
-# Pinecone (Vector Database)
-PINECONE_API_KEY=your_pinecone_api_key
-```
-
-### Required API Keys
-
-| Service | Purpose | Get Key From |
-|---------|---------|--------------|
-| **Google AI** | Gemini LLM | [Google AI Studio](https://aistudio.google.com/) |
-| **Groq** | Fast LLM inference | [Groq Console](https://console.groq.com/) |
-| **OpenRouter** | Multi-model access | [OpenRouter](https://openrouter.ai/) |
-| **Langfuse** | Observability/Tracing | [Langfuse](https://langfuse.com/) |
-| **Pinecone** | Vector Database | [Pinecone](https://www.pinecone.io/) |
-
-> ⚠️ **Important**: Never commit your `.env` file to Git! It's already in `.gitignore`.
+Key idea:
+This agent is responsible for procedural coding and service-level classification.
 
 ---
 
-## 🖥️ Running the Server
+## 4. HCPCS Level II Coding Agent
 
-### Development Mode (with auto-reload)
+Role:
+HCPCS Level II Coding Agent
 
-```bash
-uvicorn app.main:app --reload
-```
+Purpose:
+This agent assigns codes for non-physician services, medications, supplies, equipment, and certain injections or treatments.
 
-### Production Mode
+What it does:
+- Reads structured medication, supply, injection, and equipment terms
+- Retrieves relevant HCPCS references
+- Links HCPCS codes to diagnosis context when needed
+- Applies CMS and HCPCS coding logic
+- Identifies the most appropriate Level II code
 
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
+Typical responsibilities:
+- Coding medications and injections
+- Supplies and durable medical equipment
+- Drugs or services not covered by CPT
+- Non-physician and ancillary service codes
 
-### Expected Output
+Important rules:
+- Distinguish drugs, supplies, and equipment correctly
+- Use ICD context for medical necessity where relevant
+- Return only valid structured HCPCS output
 
-```
-🚀 Starting Medical Coding API v1.0.0
-📍 Environment: development
-🔗 API Docs: http://0.0.0.0:8000/docs
-INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process
-```
+Model used:
+Qwen 3.5 Flash
 
----
-
-## 📚 API Documentation
-
-Once the server is running, access the interactive API documentation:
-
-| Documentation | URL |
-|---------------|-----|
-| **Swagger UI** | [http://localhost:8000/docs](http://localhost:8000/docs) |
-| **ReDoc** | [http://localhost:8000/redoc](http://localhost:8000/redoc) |
-| **OpenAPI JSON** | [http://localhost:8000/openapi.json](http://localhost:8000/openapi.json) |
+Key idea:
+This agent handles the HCPCS layer, which often covers items outside standard CPT procedure coding.
 
 ---
 
-## � API Endpoints
+## Agent Coordination in the Crew
 
-### Health Check
-```http
-GET /api/v1/health
-```
-Returns service status and version.
+The backend initializes a single crew containing these agents:
 
-### Process Medical Text
-```http
-POST /api/v1/coding/process
-Content-Type: application/json
+- Input Structuring Agent
+- ICD Coding Agent
+- HCPCS Coding Agent
+- CPT Coding Agent
 
-{
-  "medical_report_text": "Patient: 67-year-old male. Assessment: Acute UTI...",
-  "include_evaluation": true
-}
-```
+These agents work as a coordinated workflow rather than independent random tasks. The pipeline is designed so that:
 
-### Process PDF Upload
-```http
-POST /api/v1/coding/process-pdf
-Content-Type: multipart/form-data
+1. The raw report is first normalized
+2. The structured entities become the foundation for all later coding steps
+3. Each coding agent works on its domain
+4. All outputs are combined into a single medical coding result
 
-file: <your-pdf-file>
-include_evaluation: true
-```
-
-### Process Test PDF (Development Only)
-```http
-POST /api/v1/coding/process-test-pdf?filename=sample_medical_report.pdf
-```
-Place your test PDF in the `backend/` folder.
+This gives the backend a modular, explainable, and auditable coding process.
 
 ---
 
-## �📁 Project Structure
+## Why the Agents Are Separate
 
-```
-backend/
-├── 📄 .env.example          # Environment variables template
-├── 📄 .gitignore            # Git ignore rules
-├── 📄 README.md             # This file
-├── 📄 requirements.txt      # Python dependencies
-│
-├── 📁 app/                  # Main application package
-│   ├── 📄 __init__.py
-│   ├── 📄 main.py           # FastAPI app entry point
-│   │
-│   ├── 📁 core/             # ⚙️ Configuration & Settings
-│   │   ├── config.py            # Environment settings
-│   │   ├── dependencies.py      # FastAPI DI
-│   │   ├── llm_config.py        # LLM model configs
-│   │   ├── vector_db.py         # Pinecone setup
-│   │   └── observability.py     # Langfuse/OpenLIT
-│   │
-│   ├── 📁 models/           # 📋 Pydantic Schemas
-│   │   ├── requests.py          # API request models
-│   │   ├── responses.py         # API response models
-│   │   ├── entities.py          # Medical entities
-│   │   ├── icd_models.py        # ICD coding schemas
-│   │   ├── cpt_models.py        # CPT coding schemas
-│   │   ├── hcpcs_models.py      # HCPCS coding schemas
-│   │   └── judge_models.py      # Evaluation schemas
-│   │
-│   ├── 📁 agents/           # 🤖 CrewAI Agents
-│   │   ├── entity_structuring_agent.py
-│   │   ├── icd_coding_agent.py
-│   │   ├── cpt_coding_agent.py
-│   │   ├── hcpcs_coding_agent.py
-│   │   └── crew.py              # Crew orchestration
-│   │
-│   ├── 📁 tools/            # 🔧 RAG Vector Search Tools
-│   │   ├── icd_search_tool.py
-│   │   ├── cpt_search_tool.py
-│   │   └── hcpcs_search_tool.py
-│   │
-│   ├── 📁 services/         # 💼 Business Logic
-│   │   ├── pdf_extractor.py     # PDF text extraction
-│   │   ├── coding_pipeline.py   # Main pipeline
-│   │   ├── judge_service.py     # LLM as Judge
-│   │   ├── embedding_service.py # Embeddings
-│   │   └── tracing_service.py   # Langfuse tracing
-│   │
-│   ├── 📁 api/              # 🌐 API Routes
-│   │   └── v1/
-│   │       ├── router.py        # v1 router
-│   │       └── endpoints/
-│   │           ├── coding.py    # Coding endpoints
-│   │           └── health.py    # Health check
-│   │
-│   └── 📁 utils/            # 🛠️ Utilities
-│       ├── text_utils.py        # Text cleaning
-│       ├── compression.py       # Response compression
-│       └── exceptions.py        # Custom exceptions
-│
-└── 📁 tests/                # 🧪 Test Files
-    ├── conftest.py              # Pytest fixtures
-    ├── test_api.py              # API tests
-    └── test_services.py         # Service tests
-```
+The separation exists because each coding domain has different rules:
+
+- ICD focuses on diagnoses
+- CPT focuses on procedures and services
+- HCPCS focuses on supplies, drugs, and equipment
+- Input Structuring focuses on clean extraction before coding
+
+Keeping these as separate agents makes the system easier to debug, update, and extend.
 
 ---
 
-## 🧪 Testing
+## Agent Workflow Summary
 
-### Run Health Check
+Medical text
+→ Input Structuring Agent
+→ Structured clinical entities
+→ ICD Coding Agent
+→ CPT Coding Agent
+→ HCPCS Coding Agent
+→ Combined coding result
 
-```bash
-curl http://localhost:8000/api/v1/health
-```
+This modular architecture makes the system suitable for:
 
-### Test with Sample Text (using curl)
-
-```bash
-curl -X POST "http://localhost:8000/api/v1/coding/process" \
-  -H "Content-Type: application/json" \
-  -d '{"medical_report_text": "Patient: 67-year-old male. Assessment: Acute UTI. Administered ciprofloxacin 400 mg IV.", "include_evaluation": false}'
-```
-
-### Test via Swagger UI
-
-1. Open [http://localhost:8000/docs](http://localhost:8000/docs)
-2. Click on the endpoint you want to test
-3. Click "Try it out"
-4. Enter your data and click "Execute"
+- Clinical coding support
+- AI-assisted claims review
+- Medical documentation analysis
+- Future expansion into audits or compliance checks
 
 ---
 
-## 🔧 Troubleshooting
+## Final Note
 
-### Common Issues
+This project is designed as a multi-agent medical coding assistant, where each agent has a narrow but important role. The real power of the system is not just the model itself, but the structured workflow that breaks the coding task into diagnosis, procedure, and supply classification stages.
 
-#### ❌ `ModuleNotFoundError: No module named 'app'`
-**Solution**: Make sure you're in the `backend/` directory when running the server.
-
-#### ❌ `Python 3.11 not found`
-**Solution**: Install Python 3.11 from [python.org](https://www.python.org/downloads/)
-
-#### ❌ `pip install fails`
-**Solution**: Upgrade pip first:
-```bash
-python -m pip install --upgrade pip
-```
-
-#### ❌ `CORS errors from frontend`
-**Solution**: Update `CORS_ORIGINS` in `.env` to include your frontend URL.
-
-#### ❌ `Pinecone connection error`
-**Solution**: Verify your `PINECONE_API_KEY` is correct and indexes exist.
-
-### Getting Help
-
-If you encounter issues:
-1. Check the terminal logs for error messages
-2. Verify all API keys in `.env` are correct
-3. Ensure Pinecone indexes (`icd10`, `hcpcs`, `cpt`) are created and populated
-
----
-
-## 👥 Team Members
-
-| Name | Role | Contact |
-|------|------|---------|
-| [Your Name] | Lead Developer | [email] |
-| [Team Member] | [Role] | [email] |
-
----
-
-## 📄 License
-
-This project is for educational purposes (BE Project - Semester 7).
-
----
-
-## � Related Links
-
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [CrewAI Documentation](https://docs.crewai.com/)
-- [Pinecone Documentation](https://docs.pinecone.io/)
-- [Langfuse Documentation](https://langfuse.com/docs)
-
----
-
-**Made with ❤️ for Medical Coding Automation**
+If you want, I can also produce a shorter version of this file for GitHub, or a more technical version with exact code references and data fields for each agent.
